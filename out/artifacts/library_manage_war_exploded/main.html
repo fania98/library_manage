@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js">
+</script>
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<body>
+<div class="container-fluid">
+    <div class="row">
+     <div class="col-md-3">
+         <h3>图书管理系统</h3>
+     </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2">
+            <ul class="nav nav-pills nav-stacked">
+                <li class="active"><a>个人基本信息</a></li>
+                <li id="query"><a>图书信息查询</a></li>
+                <li><a>我的借阅</a></li>
+            </ul>
+        </div>
+        <div class="col-md-8">
+            <h3>你好，<span id="uname"></span></h3>
+            <p>借书证号：</p><span id="ulicense"></span>
+            <p>性别：</p><span id="ugender"></span>
+            <p>系别：</p><span id="udepart"></span>
+        </div>
+    </div>
+
+</div>
+</body>
+
+<script>
+    $(document).ready(function(){
+        $.get("user",{current:"true"},function(data){
+            console.log(data)
+            var jsondata=JSON.parse(data);
+            $("#uname").html(jsondata.uname)
+            $("#ulicense").html(jsondata.ulicense)
+            $("#ugender").html(jsondata.ugender)
+            $("#udepart").html(jsondata.udepart)
+        })
+
+        $("#query").click(function () {
+            window.location.href="query.html"
+        })
+    })
+</script>
+</html>

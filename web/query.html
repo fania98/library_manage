@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js">
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+<body>
+<div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+                <h3>图书管理系统</span></h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <div id="app">
+                    <template>
+                        <ul class="nav nav-pills nav-stacked" v-if="permission==='1'">
+                            <li><a>个人基本信息</a></li>
+                            <li class="active"><a>图书信息查询</a></li>
+                            <li><a>我的借阅</a></li>
+                        </ul>
+                        <ul class="nav nav-pills nav-stacked" v-if="permission==='2'">
+                            <li><a>个人基本信息</a></li>
+                            <li id="query" class="active"><a>图书信息管理</a></li>
+                            <li><a>借阅管理</a></li>
+                            <li><a>读者管理</a></li>
+                        </ul>
+                    </template>
+                </div>
+            </div>
+            <div class="col-md-9">
+            <div id="buttons">
+                <template>
+                    <button type="button" class="btn btn-default" v-on:click="showquery" class="pull-left">查询</button>
+                    <button type="button" class="btn btn-default" v-on:click="showadd" v-if="permission==='2'" class="pull-left">添加</button>
+                    <button type="button" class="btn btn-default" v-on:click="showdelete" v-if="permission==='2'" class="pull-left">删除</button>
+                </template>
+            </div>
+
+            <div id="query_form" >
+                <template>
+                <form  class="form-inline" role="form" @submit.prevent="query" v-if="is_query===true">
+                    <div class="form-group">
+                        <label for="bname">书名：</label>
+                        <input v-model="attri.bname" id="bname" class="form-control" type="text" placeholder="书名" >
+                    </div>
+                    <div class="form-group">
+                        <label for="author">作者：</label>
+                        <input v-model="attri.author" id="author" class="form-control" type="text" placeholder="作者" >
+                    </div>
+                    <div class="form-group">
+                        <label for="isbn">isbn码：</label>
+                        <input v-model="attri.isbn" id="isbn" class="form-control" type="text" placeholder="isbn码" >
+                    </div>
+                    <div class="form-group">
+                        <label for="cbs">出版社：</label>
+                        <input v-model="attri.cbs"id="cbs" class="form-control" type="text" placeholder="出版社" >
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh">ssh：</label>
+                        <input v-model="attri.ssh" id="ssh" class="form-control" type="text" placeholder="ssh码" >
+                    </div>
+                    <div class="form-group">
+                        <label for="year" class="">出版日期：</label>
+                        <input v-model="attri.year" id="year" class="form-control" type="text" placeholder="出版日期" >
+                    </div>
+                    <div class="form-group">
+                        <input  class="form-control btn btn-default" type="submit" value="查询" >
+
+                    </div>
+                </form>
+                </template>
+            </div>
+
+
+                <div id="add_form">
+                <template>
+
+                    <form  class="form-inline" role="form" v-if="is_add===true" @submit.prevent="add">
+                        <div class="form-group">
+                            <label for="bname1">书名：</label>
+                            <input v-model="attri.bname" id="bname1" class="form-control" type="text" placeholder="书名" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="author1">作者：</label>
+                            <input v-model="attri.author" id="author1" class="form-control" type="text" placeholder="作者" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="isbn">isbn码：</label>
+                            <input v-model="attri.isbn" id="isbn1" class="form-control" type="text" placeholder="isbn码" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="cbs1">出版社：</label>
+                            <input v-model="attri.cbs"id="cbs1" class="form-control" type="text" placeholder="出版社" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="ssh1">ssh：</label>
+                            <input v-model="attri.ssh" id="ssh1" class="form-control" type="text" placeholder="ssh码" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="year1">出版日期：</label>
+                            <input v-model="attri.year" id="year1" class="form-control" type="text" placeholder="出版日期" required="required">
+                        </div>
+                        <div class="form-group">
+                            <label for="num">数量：</label>
+                            <input v-model="attri.num" id="num" class="form-control" type="text" placeholder="数量" required="required">
+                        </div>
+                        <input type="submit" class="btn btn-default">
+                    </form>
+                </template>
+
+
+            </div>
+
+
+            <div id="result_list">
+            <table class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <template v-for="value in header">
+                        <th>
+                            {{value}}
+                        </th>
+                        </template>
+                        <template>
+                            <th v-if="is_delete===true">
+                                删除
+                            </th>
+                        </template>
+                    </tr>
+                </thead>
+                <tbody>
+                <template v-for="line in lines">
+                    <tr >
+                        <td>{{ line.bname }}</td>
+                        <td>{{ line.author }}</td>
+                        <td>{{ line.isbn }}</td>
+                        <td>{{line.cbs}}</td>
+                        <td>{{line.year}}</td>
+                        <td>{{line.ssh}}</td>
+                        <td>{{line.num}}</td>
+                        <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id" v-model="delete_lines"></td>
+                        <td v-if="is_update===true"><input type="submit" class="btn btn_danger"  @click="deleteline(line.id)" value="删除"></td>
+                    </tr>
+                </template>
+                </tbody>
+                <template>
+
+                    <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
+                    <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
+                    <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true">删除已选数据</button>
+                    <p>共{{total_page}}页</p>
+                </template>
+            </table>
+            </div>
+        </div>
+        </div>
+</div>
+</body>
+
+
+<script>
+    var app=new Vue({
+        el:'#app',
+        data:{
+            ulicense:null,
+            permission:null
+        },
+        methods:{
+            click:function () {
+                console.log(this.permission)
+
+            }
+        }
+
+    });
+
+    //import bootPage from './BootPage-master/src/components/BootPage.vue'
+    var query_form=new Vue({
+        el: '#query_form',
+        data: {
+            attri: {
+                permission: null,
+                bname: null,
+                author: null,
+                isbn: null,
+                cbs: null,
+                year: null,
+                ssh: null,
+                num: null,
+            },
+            is_query:false,
+
+        },
+        methods: {
+            query: function () {
+                var attrijson=JSON.parse(JSON.stringify(this.attri));
+                attrijson.query='true';
+                result_list.active_page=1;
+                attrijson.active_page=result_list.active_page;
+                attrijson.length=result_list.page_length;
+                result_list.get(attrijson);
+                console.log(attrijson)
+            },
+            click: function () {
+                console.log(this.permission);
+            },
+        }
+    });
+
+
+
+    var add_form=new Vue({
+        el:'#add_form',
+        data:{
+            attri: {
+                bname: null,
+                author: null,
+                isbn: null,
+                cbs: null,
+                year: null,
+                ssh: null,
+                num: null,
+                add: true
+            },
+            permission: null,
+            required:null,
+            is_add:false,
+            state:null
+        },
+        methods:{
+
+            add:function(){
+
+                    var jsondata=JSON.parse(JSON.stringify(this.attri));
+                    console.log(jsondata)
+                    var _result_list=result_list;
+                    var _query_form=query_form;
+                    $.post('book', jsondata, function (data) {
+                                console.log(data);
+                                var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
+                                attrijson.active_page=_result_list.active_page;
+                                attrijson.query="true";
+                                attrijson.length=_result_list.page_length;
+                                _result_list.get(attrijson)
+                         })
+                }
+            },
+        });
+
+    var button=new Vue({
+        el:'#buttons',
+        data:{
+            permission:null,
+        },
+        methods:{
+            showquery:function(){
+                query_form.is_query=!query_form.is_query;
+            },
+            showadd:function(){
+                add_form.is_add=!add_form.is_add;
+            },
+            showdelete:function(){
+                result_list.is_delete=!result_list.is_delete;
+            }
+        }
+    })
+
+    var result_list= new Vue({
+        el: '#result_list',
+        data:{
+                header: ['书名', '作者', 'isbn码', '出版社', '出版日期', 'ssh码', '可借数'],
+                lines: [],
+                loaded: false,
+                active_page: 1,
+                page_length: 15,
+                total_page: 1,
+                permission:null,
+                is_delete:false,
+                update:false,
+                current_line:null,
+                delete_lines:[],
+                is_update:false
+
+            },
+        methods: {
+             get:function (jsondata) {
+                    console.log(jsondata)
+                    var _this=this;
+                     $.get('book',jsondata,function (res,status) {
+                        var resultlist=JSON.parse(res);
+                        console.log(res);
+                        console.log(status);
+                        _this.lines=resultlist.data;//必须要是json对象
+                        //_this.lines=JSON.parse(_this.lines)//将字符串转换为json对象
+                        //Vue.set(this,lines,)
+                        // Vue.set()
+                        _this.total_page=JSON.stringify(resultlist.page_num);
+                        _this.loaded=true;
+
+                    })
+                },
+            clicked:function () {
+                console.log(this.lines)
+                alert(this.loaded)
+
+            },
+            next:function(){
+                 if(this.active_page<this.total_page)
+                     this.active_page+=1;
+                 this.delete_lines=[];
+                 var attridata=JSON.parse(JSON.stringify(query_form.attri));
+                 attridata.query="true";
+                 attridata.active_page=this.active_page;
+                 attridata.length=this.page_length;
+                 this.get(attridata);
+                 //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            last:function(){
+                if(this.active_page>1)
+                    this.active_page-=1;
+                this.delete_lines=[];
+                var attridata=JSON.parse(JSON.stringify(query_form.attri));
+                attridata.query="true";
+                attridata.active_page=this.active_page;
+                attridata.length=this.page_length;
+                this.get(attridata);
+                //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            deleteline:function(){
+              console.log(this.delete_lines);
+              var json={}
+              json.delete_lines=this.delete_lines;
+              json.delete="true";
+              var _this=this;
+              var _query_form=query_form;
+                $.post("book",json,function(data){
+                    if(data!='0'){
+                        var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
+                        attrijson.active_page=_this.active_page;
+                        attrijson.query="true";
+                        attrijson.length=_this.page_length;
+                        _this.get(attrijson)
+                    }
+
+                })
+
+            }
+        },
+        mounted:function(){
+            //var app=app;
+
+            var _this=this;
+            var _query=query_form;
+            var _button=button;
+            var _app=app;
+            var _add=add_form;
+            $.get('user',{current:"true"},function(data){
+                var jsondata=JSON.parse(data)
+
+                _app.ulicense=jsondata.ulicense;
+                _app.permission=jsondata.permission;
+                _this.permission=_app.permission;
+                _query.permission=_app.permission;
+                _add.permission=_app.permission;
+                _button.permission=_app.permission;
+                console.log(_app.ulicense)
+                console.log(_app.permission)
+
+            });
+            query_form.permission=app.permission;
+            //this.permission=app.permission;
+            this.get({active:this.active_page,length:this.page_length,query:"true"});
+
+            console.log({active:this.active_page,length:this.page_length})
+           // console.log(query_form.permission)
+
+        }
+    });
+
+
+
+</script>
+
+</html>
