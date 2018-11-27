@@ -40,9 +40,10 @@
             <div class="col-md-9">
             <div id="buttons">
                 <template>
-                    <button type="button" class="btn btn-default" v-on:click="showquery" class="pull-left">查询</button>
-                    <button type="button" class="btn btn-default" v-on:click="showadd" v-if="permission==='2'" class="pull-left">添加</button>
-                    <button type="button" class="btn btn-default" v-on:click="showdelete" v-if="permission==='2'" class="pull-left">删除</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showquery" class="pull-left">查询</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showadd" v-if="permission==='2'" >添加</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showdelete" v-if="permission==='2'">删除</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showupdate" v-if="permission==='2'">修改</button>
                 </template>
             </div>
 
@@ -139,17 +140,64 @@
                     </tr>
                 </thead>
                 <tbody>
-                <template v-for="line in lines">
+                <template v-for="(line,index) of lines">
                     <tr >
-                        <td>{{ line.bname }}</td>
-                        <td>{{ line.author }}</td>
-                        <td>{{ line.isbn }}</td>
-                        <td>{{line.cbs}}</td>
-                        <td>{{line.year}}</td>
-                        <td>{{line.ssh}}</td>
-                        <td>{{line.num}}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{ line.bname }}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{ line.author }}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{ line.isbn }}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{line.cbs}}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{line.year}}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{line.ssh}}</td>
+                        <td v-bind:contentEditable="current_line===line.id">{{line.num}}</td>
                         <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id" v-model="delete_lines"></td>
-                        <td v-if="is_update===true"><input type="submit" class="btn btn_danger"  @click="deleteline(line.id)" value="删除"></td>
+                        <td v-if="is_update===true">
+                            <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
+                        </td>
+                        <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="updateModalLabel">修改图书数据</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form  class="form-inline" role="form">
+                                            <div class="form-group">
+                                                <label for="bname2">书名：</label>
+                                                <input v-model="selected_line.bname" id="bname2" class="form-control" type="text" placeholder="书名" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="author2">作者：</label>
+                                                <input v-model="selected_line.author" id="author2" class="form-control" type="text" placeholder="作者" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="isbn2">isbn码：</label>
+                                                <input v-model="selected_line.isbn" id="isbn2" class="form-control" type="text" placeholder="isbn码" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="cbs2">出版社：</label>
+                                                <input v-model="selected_line.cbs"id="cbs2" class="form-control" type="text" placeholder="出版社" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="ssh2">ssh：</label>
+                                                <input v-model="selected_line.ssh" id="ssh2" class="form-control" type="text" placeholder="ssh码" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="year2">出版日期：</label>
+                                                <input v-model="selected_line.year" id="year2" class="form-control" type="text" placeholder="出版日期" required="required">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="num2">数量：</label>
+                                                <input v-model="selected_line.num" id="num2" class="form-control" type="text" placeholder="数量" required="required">
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                        <button type="button" class="btn btn-primary" @click="submitUpdate">提交更改</>
+                                    </div>
+                                </div><!-- /.modal-content -->
+                            </div><!-- /.modal -->
+                        </div>
                     </tr>
                 </template>
                 </tbody>
@@ -157,7 +205,7 @@
 
                     <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
                     <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
-                    <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true">删除已选数据</button>
+                    <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true"><span class="glyphicon glyphicon-trash"></span>删除已选数据</button>
                     <p>共{{total_page}}页</p>
                 </template>
             </table>
@@ -271,6 +319,9 @@
             },
             showdelete:function(){
                 result_list.is_delete=!result_list.is_delete;
+            },
+            showupdate:function(){
+                result_list.is_update=!result_list.is_update;
             }
         }
     })
@@ -287,9 +338,10 @@
                 permission:null,
                 is_delete:false,
                 update:false,
-                current_line:null,
+                selected_line:{},
                 delete_lines:[],
-                is_update:false
+                is_update:false,
+                selected_index:null
 
             },
         methods: {
@@ -298,12 +350,7 @@
                     var _this=this;
                      $.get('book',jsondata,function (res,status) {
                         var resultlist=JSON.parse(res);
-                        console.log(res);
-                        console.log(status);
                         _this.lines=resultlist.data;//必须要是json对象
-                        //_this.lines=JSON.parse(_this.lines)//将字符串转换为json对象
-                        //Vue.set(this,lines,)
-                        // Vue.set()
                         _this.total_page=JSON.stringify(resultlist.page_num);
                         _this.loaded=true;
 
@@ -353,7 +400,22 @@
                     }
 
                 })
+            },
+            updateLine:function(index){
+                 this.selected_index=index;
+                 this.selected_line=JSON.parse(JSON.stringify(this.lines[index]));
 
+            },
+            submitUpdate:function(){
+                 console.log(this.selected_line)
+                 var updatejson=JSON.parse(JSON.stringify(this.selected_line))
+                 updatejson.update='true';
+                 var _this=this;
+                 $.post("book",updatejson,function (data) {
+                     if(data=='0'){
+                         Vue.set(_this.lines, _this.selected_index, _this.selected_line);
+                     }
+                 })
             }
         },
         mounted:function(){
