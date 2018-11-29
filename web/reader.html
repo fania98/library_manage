@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>读者管理</title>
+</head>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js">
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <h3>图书管理系统</span></h3>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2">
+            <div id="app">
+                <template>
+                    <ul class="nav nav-pills nav-stacked" v-if="permission==='1'">
+                        <li><a href="main.html">个人基本信息</a></li>
+                        <li class="active"><a href="book.html">图书信息查询</a></li>
+                        <li><a>我的借阅</a></li>
+                    </ul>
+                    <ul class="nav nav-pills nav-stacked" v-if="permission==='2'">
+                        <li><a href="admin.html">个人基本信息</a></li>
+                        <li><a href="book.html">图书信息管理</a></li>
+                        <li><a>借阅管理</a></li>
+                        <li class="active"><a>读者管理</a></li>
+                    </ul>
+                </template>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div id="buttons">
+                <template>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showquery" class="pull-left">查询</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showadd" v-if="permission==='2'" >添加</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showdelete" v-if="permission==='2'">删除</button>
+                    <button type="button" class="btn btn-default pull-left" v-on:click="showupdate" v-if="permission==='2'">修改</button>
+                </template>
+            </div>
+
+            <div id="query_form" >
+                <userform :attr="attri" v-if="is_show===true" @op="query">
+
+                </userform>
+            </div>
+
+
+            <div id="add_form">
+                    <userform  :attr="attri" v-if="is_show===true"  @op="add">
+
+                    </userform>
+            </div>
+
+
+            <div id="result_list">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                    <tr>
+                        <template v-for="value in header">
+                            <th>
+                                {{value}}
+                            </th>
+                        </template>
+                        <template>
+                            <th v-if="is_delete===true">
+                                删除
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template v-for="(line,index) of lines">
+                        <tr >
+                            <td >{{ line.license }}</td>
+                            <td >{{ line.uname }}</td>
+                            <td>{{ line.ugender }}</td>
+                            <td >{{line.udepart}}</td>
+                            <td>{{line.ugrade}}</td>
+                            <td >{{line.permission}}</td>
+                            <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.uid" v-model="delete_lines"></td>
+                            <td v-if="is_update===true">
+                                <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
+                            </td>
+                            <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="updateModalLabel">修改用户数据</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <userform :attr="selected_line" @op="submitUpdate">
+
+                                            </userform>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                            <!--<button type="button" class="btn btn-primary" @click="submitUpdate">提交更改</button>-->
+                                        </div>
+                                    </div><!-- /.modal-content -->
+                                </div><!-- /.modal -->
+                            </div>
+                        </tr>
+                    </template>
+                    </tbody>
+                    <template>
+
+                        <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
+                        <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
+                        <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true"><span class="glyphicon glyphicon-trash"></span>删除已选数据</button>
+                        <p>共{{total_page}}页</p>
+                    </template>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+
+<script>
+    Vue.component('userform',{
+        props:['operation','attr'],
+        data:function () {
+            return{
+                attr:"attr"
+            }
+        },
+        template:'<form  class="form-inline" role="form"  @submit.prevent="$emit(\'op\',attr)" >\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="license">借书证号：</label>\n' +
+        '                            <input v-model="attr.license" id="license" class="form-control" type="text" placeholder="借书证号" required="required">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="uname">用户名：</label>\n' +
+        '                            <input v-model="attr.uname" id="" class="form-control" type="text" placeholder="用户名" required="required">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="ugender">性别：</label>\n' +
+        '                            <input v-model="attr.ugender" id="ugender" class="form-control" type="text" placeholder="性别" required="required">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="udepart">系别：</label>\n' +
+        '                            <input v-model="attr.udepart" id="udepart" class="form-control" type="text" placeholder="系别" required="required">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="ugrade">年级：</label>\n' +
+        '                            <input v-model="attr.ugrade"  id="ugrade" class="form-control" type="text" placeholder="年级" required="required">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="permission">权限：</label>\n' +
+        '                            <input v-model="attr.permission" id="permission" class="form-control" type="text" placeholder="权限" required="required">\n' +
+        '                        </div>\n' +
+        '                        <input type="submit" class="btn btn-default">\n' +
+        '                    </form>'
+    })
+    var app=new Vue({
+        el:'#app',
+        data:{
+            ulicense:null,
+            permission:null
+        },
+        methods:{
+            click:function () {
+                console.log(this.permission)
+
+            }
+        }
+
+    });
+
+    //import bootPage from './BootPage-master/src/components/BootPage.vue'
+    var query_form=new Vue({
+        el: '#query_form',
+        data: {
+            attri: {
+                userid: null,
+                license: null,
+                uname: null,
+                ugender: null,
+                udepart: null,
+                ugrade: null,
+                upassword: null,
+                permission: null
+            },
+            is_show:false,
+
+        },
+        methods: {
+            query: function (val) {
+                this.attri=val;
+                var attrijson=JSON.parse(JSON.stringify(val));
+                attrijson.query='true';
+                result_list.active_page=1;
+                attrijson.active_page=result_list.active_page;
+                attrijson.length=result_list.page_length;
+                result_list.get(attrijson);
+                console.log(attrijson)
+            },
+        }
+    });
+
+
+
+    var add_form=new Vue({
+        el:'#add_form',
+        data:{
+            is_show:false,
+            permission:null,
+            attri: {
+                userid: null,
+                license: null,
+                uname: null,
+                ugender: null,
+                udepart: null,
+                ugrade: null,
+                upassword: null,
+                permission: null
+            }
+        },
+        methods:{
+            add:function(val){
+                console.log("add")
+                console.log(val);
+                var jsondata=JSON.parse(JSON.stringify(val));
+                jsondata.add="true"
+                console.log(jsondata)
+                var _result_list=result_list;
+                var _query_form=query_form;
+                $.post('reader', jsondata, function (data) {
+                    console.log(data);
+                    var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
+                    attrijson.active_page=_result_list.active_page;
+                    attrijson.query="true";
+                    attrijson.length=_result_list.page_length;
+                    _result_list.get(attrijson)
+                })
+            },
+            input:function (val,ob) {
+                console.log(val);
+                this.attri.license=val;
+
+            }
+        },
+    });
+
+    var button=new Vue({
+        el:'#buttons',
+        data:{
+            permission:null,
+        },
+        methods:{
+            showquery:function(){
+                query_form.is_show=!query_form.is_show;
+            },
+            showadd:function(){
+                add_form.is_show=!add_form.is_show;
+
+            },
+            showdelete:function(){
+                result_list.is_delete=!result_list.is_delete;
+            },
+            showupdate:function(){
+                result_list.is_update=!result_list.is_update;
+            }
+        }
+    })
+
+    var result_list= new Vue({
+        el: '#result_list',
+        data:{
+            header: ['借书证', '姓名', '性别', '系别', '年级', '权限'],
+            lines: [],
+            loaded: false,
+            active_page: 1,
+            page_length: 15,
+            total_page: 1,
+            permission:null,
+            is_delete:false,
+            update:false,
+            selected_line:{},
+            delete_lines:[],
+            is_update:false,
+            selected_index:null
+
+        },
+        methods: {
+            get:function (jsondata) {
+                console.log(jsondata)
+                var _this=this;
+                $.get('reader',jsondata,function (res,status) {
+                    var resultlist=JSON.parse(res);
+                    _this.lines=resultlist.data;//必须要是json对象
+                    _this.total_page=JSON.stringify(resultlist.page_num);
+                    _this.loaded=true;
+
+                })
+            },
+            clicked:function () {
+                console.log(this.lines)
+                alert(this.loaded)
+
+            },
+            next:function(){
+                if(this.active_page<this.total_page)
+                    this.active_page+=1;
+                this.delete_lines=[];
+                var attridata=JSON.parse(JSON.stringify(query_form.attri));
+                attridata.query="true";
+                attridata.active=this.active_page;
+                attridata.length=this.page_length;
+                this.get(attridata);
+                //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            last:function(){
+                if(this.active_page>1)
+                    this.active_page-=1;
+                this.delete_lines=[];
+                var attridata=JSON.parse(JSON.stringify(query_form.attri));
+                attridata.query="true";
+                attridata.active=this.active_page;
+                attridata.length=this.page_length;
+                this.get(attridata);
+                //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            deleteline:function(){
+                console.log(this.delete_lines);
+                var json={}
+                json.delete_lines=this.delete_lines;
+                json.delete="true";
+                var _this=this;
+                var _query_form=query_form;
+                $.post("reader",json,function(data){
+                    if(data!='0'){
+                        var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
+                        attrijson.active=_this.active_page;
+                        attrijson.query="true";
+                        attrijson.length=_this.page_length;
+                        _this.get(attrijson)
+                    }
+
+                })
+            },
+            updateLine:function(index){
+                this.selected_index=index;
+                this.selected_line=JSON.parse(JSON.stringify(this.lines[index]));
+
+            },
+            submitUpdate:function(val){
+                console.log(val)
+                this.selected_line=val;
+                var updatejson=JSON.parse(JSON.stringify(val))
+                updatejson.update='true';
+                var _this=this;
+                $.post("reader",updatejson,function (data) {
+                    if(data=='1'){
+                        $('#updateModal').modal('hide');
+                        Vue.set(_this.lines, _this.selected_index, _this.selected_line);
+                    }
+                })
+            }
+        },
+        mounted:function(){
+            //var app=app;
+
+            var _this=this;
+            var _query=query_form;
+            var _button=button;
+            var _app=app;
+            var _add=add_form;
+            $.get('user',{current:"true"},function(data){
+                var jsondata=JSON.parse(data)
+
+                _app.ulicense=jsondata.ulicense;
+                _app.permission=jsondata.permission;
+                _this.permission=_app.permission;
+                _query.permission=_app.permission;
+                _add.permission=_app.permission;
+                _button.permission=_app.permission;
+
+            });
+            query_form.permission=app.permission;
+            //this.permission=app.permission;
+            this.get({active:this.active_page,length:this.page_length,query:"true"});
+
+            console.log({active:this.active_page,length:this.page_length})
+            // console.log(query_form.permission)
+
+        }
+    });
+
+
+
+
+</script>
+
+</html>

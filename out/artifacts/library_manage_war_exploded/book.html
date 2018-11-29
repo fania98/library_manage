@@ -24,13 +24,13 @@
                 <div id="app">
                     <template>
                         <ul class="nav nav-pills nav-stacked" v-if="permission==='1'">
-                            <li><a>个人基本信息</a></li>
-                            <li class="active"><a>图书信息查询</a></li>
+                            <li><a href="main.html">个人基本信息</a></li>
+                            <li class="active"><a href="book.html">图书信息查询</a></li>
                             <li><a>我的借阅</a></li>
                         </ul>
                         <ul class="nav nav-pills nav-stacked" v-if="permission==='2'">
-                            <li><a>个人基本信息</a></li>
-                            <li id="query" class="active"><a>图书信息管理</a></li>
+                            <li><a href="admin.html">个人基本信息</a></li>
+                            <li class="active"><a href="book.html">图书信息管理</a></li>
                             <li><a>借阅管理</a></li>
                             <li><a>读者管理</a></li>
                         </ul>
@@ -142,13 +142,13 @@
                 <tbody>
                 <template v-for="(line,index) of lines">
                     <tr >
-                        <td v-bind:contentEditable="current_line===line.id">{{ line.bname }}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{ line.author }}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{ line.isbn }}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{line.cbs}}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{line.year}}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{line.ssh}}</td>
-                        <td v-bind:contentEditable="current_line===line.id">{{line.num}}</td>
+                        <td >{{ line.bname }}</td>
+                        <td >{{ line.author }}</td>
+                        <td>{{ line.isbn }}</td>
+                        <td >{{line.cbs}}</td>
+                        <td>{{line.year}}</td>
+                        <td >{{line.ssh}}</td>
+                        <td>{{line.num}}</td>
                         <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id" v-model="delete_lines"></td>
                         <td v-if="is_update===true">
                             <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
@@ -193,7 +193,7 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-                                        <button type="button" class="btn btn-primary" @click="submitUpdate">提交更改</>
+                                        <button type="button" class="btn btn-primary" @click="submitUpdate">提交更改</button>
                                     </div>
                                 </div><!-- /.modal-content -->
                             </div><!-- /.modal -->
@@ -367,7 +367,7 @@
                  this.delete_lines=[];
                  var attridata=JSON.parse(JSON.stringify(query_form.attri));
                  attridata.query="true";
-                 attridata.active_page=this.active_page;
+                 attridata.active=this.active_page;
                  attridata.length=this.page_length;
                  this.get(attridata);
                  //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
@@ -378,7 +378,7 @@
                 this.delete_lines=[];
                 var attridata=JSON.parse(JSON.stringify(query_form.attri));
                 attridata.query="true";
-                attridata.active_page=this.active_page;
+                attridata.active=this.active_page;
                 attridata.length=this.page_length;
                 this.get(attridata);
                 //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
@@ -393,7 +393,7 @@
                 $.post("book",json,function(data){
                     if(data!='0'){
                         var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
-                        attrijson.active_page=_this.active_page;
+                        attrijson.active=_this.active_page;
                         attrijson.query="true";
                         attrijson.length=_this.page_length;
                         _this.get(attrijson)
@@ -412,7 +412,8 @@
                  updatejson.update='true';
                  var _this=this;
                  $.post("book",updatejson,function (data) {
-                     if(data=='0'){
+                     if(data=='1'){
+                         $('#updateModal').modal('hide');
                          Vue.set(_this.lines, _this.selected_index, _this.selected_line);
                      }
                  })
@@ -435,8 +436,6 @@
                 _query.permission=_app.permission;
                 _add.permission=_app.permission;
                 _button.permission=_app.permission;
-                console.log(_app.ulicense)
-                console.log(_app.permission)
 
             });
             query_form.permission=app.permission;

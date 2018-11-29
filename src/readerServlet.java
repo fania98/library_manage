@@ -1,3 +1,7 @@
+import org.json.JSONException;
+import org.json.JSONObject;
+import util.DB;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -5,16 +9,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.json.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import util.DB;
-public class bookServlet extends HttpServlet {
+@WebServlet(name = "readerServlet")
+public class readerServlet extends HttpServlet {
     Map<String, String> attributes;
     DB db;
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -39,38 +42,32 @@ public class bookServlet extends HttpServlet {
         int length=10;
         temp=request.getParameter("length");
         if(temp!=null&&temp!="")
-        length=Integer.parseInt(temp);
+            length=Integer.parseInt(temp);
         int pagenum=1;
-        String bname = request.getParameter("bname");
-        if (bname != null&&bname!="")
-            attributes.put("bname", bname);
-        String author = request.getParameter("author");
-        if (author != null&&author!="")
-            attributes.put("author", author);
-        String isbn = request.getParameter("isbn");
-        if (isbn != null&&isbn!="")
-            attributes.put("isbn", isbn);
-        String cbs = request.getParameter("cbs");
-        if (cbs != null&&cbs!="")
-            attributes.put("cbs", cbs);
-        String year = request.getParameter("year");
-        if (year != null&&year!="")
-            attributes.put("year", year);
-        String ssh = request.getParameter("ssh");
-        if (ssh != null&&ssh!="")
-            attributes.put("ssh", ssh);
-        String num = request.getParameter("num");
-        if (num != null&&num!="")
-            attributes.put("num", num);
+        String uname = request.getParameter("uname");
+        if (uname != null&&uname!="")
+            attributes.put("uname", uname);
+        String ugender = request.getParameter("ugender");
+        if (ugender != null&&ugender!="")
+            attributes.put("ugender", ugender);
+        String udepart = request.getParameter("udepart");
+        if (udepart != null&&udepart!="")
+            attributes.put("udepart", udepart);
+        String ugrade = request.getParameter("ugrade");
+        if (ugrade != null&&ugrade!="")
+            attributes.put("ugrade", ugrade);
+        String ulicense = request.getParameter("license");
+        if (ulicense != null&&ulicense!="")
+            attributes.put("license", ulicense);
+        String upassword = request.getParameter("upassword");
+        if (upassword != null&&upassword!="")
+            attributes.put("upassword", upassword);
         System.out.println(attributes);
         //System.out.println(request.getParameter("add"));
         //System.out.println(request.getParameter("query").equals("true"));
         if (request.getParameter("query")!=null){
             //System.out.println("querry");
             JSONObject result= doQuery(active,length);
-            //System.out.println(result);
-
-            //System.out.println(response.getStatus());
             pw.print(result);
 
         }
@@ -88,14 +85,13 @@ public class bookServlet extends HttpServlet {
             pw.print(result);
         }
         else if(request.getParameter("update")!=null){
-            String id=request.getParameter("id");
+            String id=request.getParameter("userid");
             int result=doUpdate(id);
             pw.print(result);
         }
         //System.out.println(request.getParameter("add").equals("true"));
         db.closestate();
         //response.setStatus(200);
-
     }
 
     protected JSONObject doQuery(int active,int length){
@@ -106,12 +102,12 @@ public class bookServlet extends HttpServlet {
         ResultSet rs;
         ResultSet count;
         if (size == 0) {
-            rs = db.query("SELECT * FROM books ORDER BY bookid desc limit "+ String.valueOf((active-1)*length)+","+String.valueOf(length));
-            count=db.query("SELECT count(*) from books");
+            rs = db.query("SELECT * FROM reader ORDER BY userid desc limit "+ String.valueOf((active-1)*length)+","+String.valueOf(length));
+            count=db.query("SELECT count(*) from reader");
             System.out.println("qqqqq");
         } else {
-            String s = "SELECT * FROM books where";
-            String s1="SELECT count(*) FROM books where";
+            String s = "SELECT * FROM reader where";
+            String s1="SELECT count(*) FROM reader where";
             int i = 0;
             for (Map.Entry<String, String> entry : attributes.entrySet()) {
                 i++;
@@ -137,31 +133,30 @@ public class bookServlet extends HttpServlet {
             if (rs != null) {
                 while (rs.next()) {
                     JSONObject json = new JSONObject();
-                    String id=rs.getString("bookid");
-                    json.put("id",id);
-                    String name = rs.getString("bname");
-                    json.put("bname", name);
-                    String aut = rs.getString("author");
-                    json.put("author", aut);
-                    String isb = rs.getString("isbn");
-                    json.put("isbn", isb);
-                    String cb = rs.getString("cbs");
-                    json.put("cbs", cb);
-                    String yea = rs.getString("year");
-                    json.put("year", yea);
-                    String ss = rs.getString("ssh");
-                    json.put("ssh", ss);
-                    String nm = rs.getString("num");
-                    json.put("num", nm);
+                    String id=rs.getString("userid");
+                    json.put("userid",id);
+                    String name = rs.getString("uname");
+                    json.put("uname", name);
+                    String aut = rs.getString("ugender");
+                    json.put("ugender", aut);
+                    String isb = rs.getString("udepart");
+                    json.put("udepart", isb);
+                    String cb = rs.getString("ugrade");
+                    json.put("ugrade", cb);
+                    String yea = rs.getString("license");
+                    json.put("license", yea);
+                    String per = rs.getString("permission");
+                    json.put("permission", per);
                     jsonlist.add(json);
                 }
+                rs.close();
             }
             if(count!=null){
                 while(count.next()){
                     pagenum=count.getInt(1);
                 }
             }
-            rs.close();
+
             //PrintWriter pw = response.getWriter();
             String jsonstring=jsonlist.toString();
             result.put("data",jsonlist);
@@ -178,9 +173,10 @@ public class bookServlet extends HttpServlet {
     }
 
     protected int doAdd(){
-        String s="INSERT INTO books(bname,author,isbn,cbs,year,ssh,num) VALUES('"+attributes.get("bname")+"','"
-                +attributes.get("author")+"','"+attributes.get("isbn")+"','"+attributes.get("cbs")+"','"
-                +attributes.get("year")+"','"+attributes.get("ssh")+"','"+attributes.get("num")+"')";
+        String s="INSERT INTO reader(uname,license,ugender,udepart,ugrade,upassword) VALUES('"+attributes.get("uname")+"','"
+                +attributes.get("license")+"','"+attributes.get("ugender")+"','"+attributes.get("udepart")+"','"
+                +attributes.get("ugrade")+"','"+attributes.get("upassword")+"')";
+        System.out.println(s);
         int result=db.executeupdate(s);
         System.out.println(result);
         return result;
@@ -190,14 +186,14 @@ public class bookServlet extends HttpServlet {
         int k=0;
         int length=ids.length;
         for (int i=0;i<length;i++){
-            String s="DELETE from books where bookid='"+ids[i]+"'";
+            String s="DELETE from reader where userid='"+ids[i]+"'";
             System.out.println(s);
             k=db.executeupdate(s);
         }
         return k;
     }
     protected int doUpdate(String id){
-        String s="UPDATE books SET";
+        String s="UPDATE reader SET";
         int i=0;
         int size=attributes.size();
         int k=0;
@@ -211,7 +207,7 @@ public class bookServlet extends HttpServlet {
                 s = s + " " + entry.getKey() + "='" + entry.getValue() + "'";
             }
         }
-        s+=" where bookid='"+id+"'";
+        s+=" where userid='"+id+"'";
         System.out.println(s);
         k=db.executeupdate(s);
         return k;

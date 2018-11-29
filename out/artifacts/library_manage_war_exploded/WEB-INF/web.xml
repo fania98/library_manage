@@ -35,4 +35,14 @@
     <url-pattern>/user</url-pattern>
 </servlet-mapping>
 
+    <servlet>
+        <servlet-name>readerServlet</servlet-name>
+        <servlet-class>readerServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>readerServlet</servlet-name>
+        <url-pattern>/reader</url-pattern>
+    </servlet-mapping>
+
 </web-app>
