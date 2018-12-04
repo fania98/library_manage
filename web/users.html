@@ -235,7 +235,7 @@
                 console.log(jsondata)
                 var _result_list=result_list;
                 var _query_form=query_form;
-                $.post('reader', jsondata, function (data) {
+                $.post('user', jsondata, function (data) {
                     console.log(data);
                     var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
                     attrijson.active_page=_result_list.active_page;
@@ -296,7 +296,7 @@
             get:function (jsondata) {
                 console.log(jsondata)
                 var _this=this;
-                $.get('reader',jsondata,function (res,status) {
+                $.get('user',jsondata,function (res,status) {
                     var resultlist=JSON.parse(res);
                     _this.lines=resultlist.data;//必须要是json对象
                     _this.total_page=JSON.stringify(resultlist.page_num);
@@ -338,7 +338,7 @@
                 json.delete="true";
                 var _this=this;
                 var _query_form=query_form;
-                $.post("reader",json,function(data){
+                $.post("user",json,function(data){
                     if(data!='0'){
                         var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
                         attrijson.active=_this.active_page;
@@ -360,7 +360,7 @@
                 var updatejson=JSON.parse(JSON.stringify(val))
                 updatejson.update='true';
                 var _this=this;
-                $.post("reader",updatejson,function (data) {
+                $.post("user",updatejson,function (data) {
                     if(data=='1'){
                         $('#updateModal').modal('hide');
                         Vue.set(_this.lines, _this.selected_index, _this.selected_line);

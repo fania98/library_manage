@@ -138,21 +138,29 @@ public class bookServlet extends HttpServlet {
                 while (rs.next()) {
                     JSONObject json = new JSONObject();
                     String id=rs.getString("bookid");
-                    json.put("id",id);
                     String name = rs.getString("bname");
-                    json.put("bname", name);
                     String aut = rs.getString("author");
-                    json.put("author", aut);
                     String isb = rs.getString("isbn");
-                    json.put("isbn", isb);
                     String cb = rs.getString("cbs");
-                    json.put("cbs", cb);
                     String yea = rs.getString("year");
-                    json.put("year", yea);
                     String ss = rs.getString("ssh");
-                    json.put("ssh", ss);
                     String nm = rs.getString("num");
+                    int numOfBorrows=0;
+                    ResultSet borrows=db.query("SELECT count(*) from borrow where bookid= "+id);
+                    if(borrows!=null){
+                        while(borrows.next()){
+                            numOfBorrows=borrows.getInt(1);
+                        }
+                    }
+                    json.put("id",id);
+                    json.put("bname", name);
+                    json.put("author", aut);
+                    json.put("isbn", isb);
+                    json.put("cbs", cb);
+                    json.put("year", yea);
+                    json.put("ssh", ss);
                     json.put("num", nm);
+                    json.put("available",Integer.valueOf(nm)-numOfBorrows);
                     jsonlist.add(json);
                 }
             }
