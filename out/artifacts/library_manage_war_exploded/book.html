@@ -32,7 +32,7 @@
                             <li><a href="admin.html">个人基本信息</a></li>
                             <li class="active"><a href="book.html">图书信息管理</a></li>
                             <li><a>借阅管理</a></li>
-                            <li><a>读者管理</a></li>
+                            <li><a href="users.html">读者管理</a></li>
                         </ul>
                     </template>
                 </div>
@@ -149,7 +149,8 @@
                         <td>{{line.year}}</td>
                         <td >{{line.ssh}}</td>
                         <td>{{line.num}}</td>
-                        <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id" v-model="delete_lines"></td>
+                        <td>{{line.available}}</td>
+                        <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id"  v-bind:disabled="line.num!=line.available" v-model="delete_lines"></td>
                         <td v-if="is_update===true">
                             <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
                         </td>
@@ -186,7 +187,7 @@
                                                 <input v-model="selected_line.year" id="year2" class="form-control" type="text" placeholder="出版日期" required="required">
                                             </div>
                                             <div class="form-group">
-                                                <label for="num2">数量：</label>
+                                                <label for="num2">总数：</label>
                                                 <input v-model="selected_line.num" id="num2" class="form-control" type="text" placeholder="数量" required="required">
                                             </div>
                                         </form>
@@ -329,7 +330,7 @@
     var result_list= new Vue({
         el: '#result_list',
         data:{
-                header: ['书名', '作者', 'isbn码', '出版社', '出版日期', 'ssh码', '可借数'],
+                header: ['书名', '作者', 'isbn码', '出版社', '出版日期', 'ssh码', '总数','可借数'],
                 lines: [],
                 loaded: false,
                 active_page: 1,
@@ -401,6 +402,7 @@
 
                 })
             },
+
             updateLine:function(index){
                  this.selected_index=index;
                  this.selected_line=JSON.parse(JSON.stringify(this.lines[index]));

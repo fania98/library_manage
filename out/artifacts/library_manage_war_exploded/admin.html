@@ -7,6 +7,8 @@
 <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js">
 </script>
 <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
 <body>
 <div class="container-fluid">
     <div class="row">
@@ -20,7 +22,7 @@
                 <li class="active"><a>个人基本信息</a></li>
                 <li id="query"><a>图书信息管理</a></li>
                 <li><a>借阅管理</a></li>
-                <li><a>读者管理</a></li>
+                <li><a href="users.html">读者管理</a></li>
             </ul>
         </div>
         <div class="col-md-8">
@@ -28,7 +30,42 @@
             <p>借书证号：</p><span id="ulicense"></span>
             <p>性别：</p><span id="ugender"></span>
             <p>系别：</p><span id="udepart"></span>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#passwordModal">修改密码</button>
+            <div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="updateModalLabel">修改密码</h4>
+                        </div>
+                        <div class="modal-body" id="modalbody">
+                            <form class="form-horizontal" >
+                                <div class="control-group">
+
+                                    <!-- Text input-->
+                                    <label class="control-label" for="originalPass">原始密码</label>
+                                    <div class="controls">
+                                        <input type="text" placeholder="placeholder" class="input-xlarge" id="originalPass">
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="control-label" for="newPass">新密码</label>
+                                    <div class="controls">
+                                        <input type="text" placeholder="placeholder" class="input-xlarge" id="newPass">
+                                    </div>
+                                </div>
+                            </form>
+                            <p id="submitStatus"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-primary" id="submitUpdate">提交更改</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
         </div>
+
     </div>
 
 </div>
@@ -47,6 +84,19 @@
 
         $("#query").click(function () {
             window.location.href="book.html"
+        })
+
+        $('#submitUpdate').click(function(){
+            var ori=$("#originalPass").val();
+            var changed=$("#newPass").val();
+            $.post("user",{current:"true",operation:"changepassword",originalPass:ori,newPass:changed},function (data) {
+                if(data=='OK'){
+                    $('#submitStatus').html("修改成功");
+                }
+                else{
+                    $('#submitStatus').html("修改失败");
+                }
+            })
         })
     })
 </script>
