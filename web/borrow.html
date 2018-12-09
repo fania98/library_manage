@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>借阅管理</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js">
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+
+    <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <div class="row">
+            <div class="col-md-3">
+                <h3>图书管理系统</span></h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <div >
+                    <template>
+                        <ul class="nav nav-pills nav-stacked" v-if="user.permission==='1'">
+                            <li><a href="main.html">个人基本信息</a></li>
+                            <li><a href="book.html">图书信息查询</a></li>
+                            <li class="active"><a>我的借阅</a></li>
+                        </ul>
+                        <ul class="nav nav-pills nav-stacked" v-if="user.permission==='2'">
+                            <li><a href="admin.html">个人基本信息</a></li>
+                            <li><a href="book.html">图书信息管理</a></li>
+                            <li class="active"><a>借阅管理</a></li>
+                            <li><a>读者管理</a></li>
+                        </ul>
+                    </template>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div id="buttons">
+                    <template>
+                        <button type="button" class="btn btn-default pull-left" v-on:click="showquery" class="pull-left">查询</button>
+                        <button type="button" class="btn btn-default pull-left" @click="borrow" v-if="user.permission==='1'" >借书</button>
+                        <button type="button" class="btn btn-default pull-left" @click="showreturn" v-if="user.permission==='1'" >还书</button>
+                        <button type="button" class="btn btn-default pull-left"  @click="borrow" v-if="user.permission==='2'">添加记录</button>
+                        <button type="button" class="btn btn-default pull-left" v-on:click="showdelete" v-if="user.permission==='2'">删除记录</button>
+                        <button type="button" class="btn btn-default pull-left"  @click="showupdate" v-if="user.permission==='2'">修改记录</button>
+                    </template>
+                </div>
+                <div class="modal fade" id="add_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="borrowModalLabel">借书</h4>
+                            </div>
+                            <div class="modal-body">
+                                <borrowform :attr="copyAttri(attri)" operation="add" :permission="user.permission" @op="add" @close="closeModal('add_form')">
+
+                                </borrowform>
+                            </div>
+                            <div class="modal-footer">
+                                <p id="addstate"></p>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal -->
+                </div>
+                <div class="modal fade" id="update_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="updateModalLabel">借书</h4>
+                            </div>
+                            <div class="modal-body">
+                                <borrowform :attr="update.selected_line" operation="update" :permission="user.permission" @op="submitUpdate" @close="closeModal('update_form')">
+                                </borrowform>
+                            </div>
+                            <div class="modal-footer">
+                                <p id="updatestate"></p>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal -->
+                </div>
+                <div id="query_form" >
+                    <borrowform :attr="attri" v-if="is_query===true" @op="query" :permission="user.permission" @close="closeQuery">
+
+                    </borrowform>
+                </div>
+                <div id="result_list">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                        <tr>
+                            <template v-for="value in tabel.header">
+                                <th>
+                                    {{value}}
+                                </th>
+                            </template>
+                            <template>
+                                <th v-if="is_show_return===true">
+                                    还书
+                                </th>
+                            </template>
+                            <template>
+                                <th v-if="is_delete===true">
+                                    删除
+                                </th>
+                            </template>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template v-for="(line,index) of tabel.lines">
+                            <tr >
+                                <td >{{ line.ulicense }}</td>
+                                <td>{{line.uname}}</td>
+                                <td >{{ line.bookid }}</td>
+                                <td>{{ line.bname }}</td>
+                                <td >{{line.bdate}}</td>
+                                <td>{{line.duedate}}</td>
+                                <td >{{line.rdate}}</td>
+                                <td>{{ is_return(line.is_return) }}</td>
+                                <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.uid" v-model="delete_lines"></td>
+                                <td v-if="update.is_update===true">
+                                    <button type="button" class="btn btn_primary"  @click="updateLine(index)">更改</button>
+                                </td>
+                                <td v-if="is_show_return===true">
+                                    <button v-if="line.is_return==='0'" type="button" class="btn btn_primary"  @click="returnbook(line.id)">还书</button>
+                                </td>
+                            </tr>
+                        </template>
+                        </tbody>
+                        <template>
+
+                            <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
+                            <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
+                            <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true"><span class="glyphicon glyphicon-trash"></span>删除已选数据</button>
+                            <p>共{{tabel.total_page}}页</p>
+                        </template>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+
+    Vue.component('borrowform',{
+        props:['operation','attr','permission'],
+        data:function () {
+            return{
+                attr:"attr",
+                permission:"permission"
+            }
+        },
+        template:'<form  class="form-inline" role="form"  @submit.prevent="$emit(\'op\',attr)" >\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="license">借书证号：</label>\n' +
+        '                            <input v-model="attr.ulicense" id="license" class="form-control" type="text" placeholder="借书证号" :required="operation!=query" v-bind:readonly="permission===\'1\'">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="bookid">书号：</label>\n' +
+        '                            <input v-model="attr.bookid" id="ugender" class="form-control" type="text" placeholder="书号" :required="operation!=query">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group">\n' +
+        '                            <label for="bdate">借阅日期：</label>\n' +
+        '                            <input v-model="attr.bdate" id="bdate" class="form-control" type="text" placeholder="借阅日期" :required="operation!=query" :readonly="operation!=query">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group" >\n' +
+        '                            <label for="duedate">应还日期：</label>\n' +
+        '                            <input v-model="attr.duedate"  id="duedate" class="form-control" type="text" placeholder="应还日期" :required="operation!=query" v-bind:readonly="permission===\'1\'">\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group" v-if="permission===\'2\'&&operation!=\'add\'">\n' +
+        '                            <label for="rdate">归还日期：</label>\n' +
+        '                            <input v-model="attr.rdate" id="rdate" class="form-control" type="text" placeholder="归还日期" >\n' +
+        '                        </div>\n' +
+        '                        <div class="form-group" v-if="permission===\'2\'&&operation!=\'add\'">\n' +
+        '                            <label for="is_return">是否归还：</label>\n' +
+        '                            <input v-model="attr.is_return" id="is_return" class="form-control" type="text" placeholder="是否归还" :required="operation!=query">\n' +
+        '                        </div>\n' +
+        '                        <input type="submit"value="确定" class="btn btn-primary">\n' +
+        '                       <button type="button" class="btn btn-danger" @click="$emit(\'close\')">关闭</button>\n'+
+        '                    </form>'
+    })
+    var app=new Vue({
+        el: '#app',
+        data: {
+            user: {
+                ulicense: null,
+                uname: null,
+                permission: null
+            },
+            attri: {
+                ulicense: null,
+                uname: null,
+                rdate: null,
+                is_return: null,
+                bookid: null,
+                bdate: null,
+                duedate: null,
+            },
+            tabel: {
+                header: ['读者证号', '读者姓名', '书号', '书名', '借阅日期', '应还日期', '归还日期', '是否归还'],
+                lines: [],
+                loaded: false,
+                active_page: 1,
+                page_length: 15,
+                total_page: 1,
+                permission: null,
+
+            },
+            delete_lines:[],
+            return_line:null,
+            is_delete:false,
+            is_query:false,
+            is_show_return:false,
+            update:{
+                selected_line:{},
+                is_update:false,
+                selected_index:null
+            }
+
+        },
+        methods: {
+            closeQuery:function(){
+              this.is_query=false;
+            },
+            closeModal:function(modal){
+                $('#'+modal).modal('hide');
+            },
+            copyAttri:function(){
+              return JSON.parse(JSON.stringify(this.attri));
+            },
+            add: function (val) {
+                console.log("add")
+                console.log(val);
+                var jsondata = JSON.parse(JSON.stringify(val));
+                jsondata.operation = "add"
+                console.log(jsondata)
+                var _this=this;
+                $.post('borrow', jsondata, function (data) {
+                    console.log(data);
+                    $('#addstate').html(data);
+                    var attrijson = JSON.parse(JSON.stringify(_this.attri));
+                    attrijson.active_page = _this.tabel.active_page;
+                    attrijson.operation = "query";
+                    attrijson.length = _this.tabel.page_length;
+                    _this.get(attrijson)
+                })
+            },
+            borrow:function(){
+              this.setdate();
+              $('#add_form').modal('show');
+            },
+            setdate:function(){
+                var date = new Date();
+                this.attri.bdate=this.formatdate(date);
+                date.setDate(date.getDate()+14);
+                this.attri.duedate=this.formatdate(date);
+            },
+            formatdate:function(date){
+                var year = date.getFullYear();
+                var month = date.getMonth() + 1;
+                var strDate = date.getDate();
+                var seperator1='-';
+                if (month >= 1 && month <= 9) {
+                    month = "0" + month;
+                }
+                if (strDate >= 0 && strDate <= 9) {
+                    strDate = "0" + strDate;
+                }
+                var dateformat = year + seperator1 + month + seperator1 + strDate;
+                return dateformat;
+            },
+            input: function (val, ob) {
+                console.log(val);
+                this.attri.license = val;
+
+            },
+            showquery: function () {
+               this.is_query = true;
+            },
+            showdelete: function () {
+                this.is_delete = !this.is_delete;
+            },
+            showreturn:function(){
+                this.is_show_return =!this.is_show_return
+            },
+            showupdate:function(){
+              this.update.is_update=!this.is_delete;
+            },
+            get: function (jsondata) {
+                console.log(jsondata)
+                var _this = this;
+                $.get('borrow', jsondata, function (res, status) {
+                    var resultlist = JSON.parse(res);
+                    _this.tabel.lines = resultlist.data;//必须要是json对象
+                    _this.tabel.total_page = JSON.stringify(resultlist.page_num);
+                    _this.tabel.loaded = true;
+
+                })
+            },
+            clicked: function () {
+                console.log(this.lines)
+                alert(this.loaded)
+
+            },
+            next: function () {
+                if (this.tabel.active_page < this.tabel.total_page)
+                    this.tabel.active_page += 1;
+                this.tabel.delete_lines = [];
+                var attridata = JSON.parse(JSON.stringify(this.attri));
+                attridata.operation = "query";
+                attridata.active = this.tabel.active_page;
+                attridata.length = this.tabel.page_length;
+                this.get(attridata);
+                //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            last: function () {
+                if (this.tabel.active_page > 1)
+                    this.tabel.active_page -= 1;
+                this.tabel.delete_lines = [];
+                var attridata = JSON.parse(JSON.stringify(query_form.attri));
+                attridata.query = "true";
+                attridata.active = this.active_page;
+                attridata.length = this.page_length;
+                this.get(attridata);
+                //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
+            },
+            returnbook: function (id) {
+                this.return_line=id;
+                //console.log(this.delete_lines);
+                var json = {}
+                json.return_line = this.return_line;
+                json.operation = "return";
+                var _this = this;
+                $.post("borrow", json, function (data) {
+                    if (data != '-1') {
+                        if(data!='0'){
+                            alert("共超期"+data+"天！");
+                        }
+                        var attrijson = JSON.parse(JSON.stringify(_this.attri));
+                        attrijson.active = _this.tabel.active_page;
+                        attrijson.operation = "query";
+                        attrijson.length = _this.tabel.page_length;
+                        _this.get(attrijson)
+                    }
+
+                })
+            },
+            updateLine: function (index) {
+                this.update.selected_index = index;
+                this.update.selected_line = JSON.parse(JSON.stringify(this.tabel.lines[index]));
+                $('#update_form').modal('show');
+            },
+            submitUpdate: function (val) {
+                console.log(val)
+                this.selected_line = val;
+                var updatejson = JSON.parse(JSON.stringify(val))
+                updatejson.operation = 'update';
+                var _this = this;
+                $.post("borrow", updatejson, function (data) {
+                    if (data == '1') {
+                        $('#updateModal').modal('hide');
+                        Vue.set(_this.tabel.lines, _this.update.selected_index, _this.update.selected_line);
+                    }
+                })
+            },
+            is_return: function (val) {
+                if (val == 0) {
+                    return '未归还'
+                }
+                else {
+                    return '已归还'
+                }
+            },
+            query: function (val) {
+                this.attri=val;
+                var attrijson=JSON.parse(JSON.stringify(val));
+                attrijson.operation='query';
+                this.tabel.active_page=1;
+                attrijson.active_page=this.tabel.active_page;
+                attrijson.length=this.tabel.page_length;
+                this.get(attrijson);
+                console.log(attrijson)
+            },
+            deleteline:function(){
+                console.log(this.delete_lines);
+                var json={}
+                json.delete_lines=this.delete_lines;
+                json.operation="delete";
+                var _this=this;
+                $.post("borrow",json,function(data){
+                    if(data!='0'){
+                        var attrijson=JSON.parse(JSON.stringify(_this.attri));
+                        attrijson.active=_this.tabel.active_page;
+                        attrijson.operation="query";
+                        attrijson.length=_this.tabel.page_length;
+                        _this.get(attrijson)
+                    }
+
+                })
+            },
+        },
+        mounted: function () {
+            var _this = this;
+            $.get('user', {current: "true"}, function (data) {
+                var jsondata = JSON.parse(data)
+                _this.user.ulicense=jsondata.ulicense;
+                _this.user.uname=jsondata.uname;
+                _this.user.permission=jsondata.permission;
+                if(_this.user.permission=='1'){
+                    _this.attri.ulicense=_this.user.ulicense;
+                    _this.attri.uname=_this.user.uname;
+                }
+
+            });
+            this.get({active: this.tabel.active_page, length: this.tabel.page_length, operation:"query"});
+
+
+        }
+    })
+
+
+
+
+</script>
+</html>

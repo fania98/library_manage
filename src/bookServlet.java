@@ -198,6 +198,7 @@ public class bookServlet extends HttpServlet {
         int k=0;
         int length=ids.length;
         for (int i=0;i<length;i++){
+            //String is_borrowed="SELECT count(*) from borrow where bookid='"+ids[i]+"'";
             String s="DELETE from books where bookid='"+ids[i]+"'";
             System.out.println(s);
             k=db.executeupdate(s);

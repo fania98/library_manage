@@ -12,7 +12,7 @@ public class DB {
     PreparedStatement pstmt;
   public DB(){
     String driver = "com.mysql.jdbc.Driver";
-    String url = "jdbc:mysql://192.168.248.128:3306/library";
+    String url = "jdbc:mysql://192.168.112.128:3306/library";
     String username = "root";
     String password = "623672285";
     try {
