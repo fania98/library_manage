@@ -72,7 +72,7 @@ public class borrowServlet extends HttpServlet {
             attributes.put("rdate", rdate);
         String is_return = request.getParameter("is_return");
         if (is_return != null&&is_return!="")
-            attributes.put("is_return", rdate);
+            attributes.put("is_return", is_return);
         System.out.println(attributes);
         //System.out.println(request.getParameter("add"));
         //System.out.println(request.getParameter("query").equals("true"));
@@ -91,8 +91,8 @@ public class borrowServlet extends HttpServlet {
             pw.print(result);
         }
         else if(op.equals("delete")){
-            String id=request.getParameter("delete_line");
-            int result=doDelete(id);
+            String ids[]=request.getParameterValues("delete_lines");
+            int result=doDelete(ids);
             pw.print(result);
         }
         else if(op.equals("return")){
@@ -100,8 +100,8 @@ public class borrowServlet extends HttpServlet {
             long result=doReturn(id);
             pw.print(result);
         }
-        else if(request.getParameter("update")!=null){
-            String id=request.getParameter("userid");
+        else if(op.equals("update")){
+            String id=request.getParameter("id");
             int result=doUpdate(id);
             pw.print(result);
         }
@@ -270,15 +270,20 @@ public class borrowServlet extends HttpServlet {
         return result;
     }
 
-    protected int doDelete(String id){
+    protected int doDelete(String[] ids){
         int k=0;
-        String s="DELETE from borrow where id='"+id+"'";
-        System.out.println(s);
-        k=db.executeupdate(s);
+        int len=ids.length;
+        for(int i=0;i<len;i++){
+            String s="DELETE from borrow where id='"+ids[i]+"'";
+
+            int l=db.executeupdate(s);
+            if(l!=-1)
+                k+=l;
+        }
         return k;
     }
     protected int doUpdate(String id){
-        String s="UPDATE reader SET";
+        String s="UPDATE borrow SET";
         int i=0;
         int size=attributes.size();
         int k=0;
@@ -292,7 +297,7 @@ public class borrowServlet extends HttpServlet {
                 s = s + " " + entry.getKey() + "='" + entry.getValue() + "'";
             }
         }
-        s+=" where userid='"+id+"'";
+        s+=" where id='"+id+"'";
         System.out.println(s);
         k=db.executeupdate(s);
         return k;

@@ -8,10 +8,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,7 +29,7 @@ public class userServlet extends HttpServlet {
         HttpSession session = request.getSession();
         PrintWriter pw = response.getWriter();
         System.out.println(request.getParameter("current"));
-        if (request.getParameter("current").equals("true")) {
+        if (request.getParameter("current")!=null&&request.getParameter("current").equals("true")) {
             Object ulicense = session.getAttribute("ulicense");
             Object uname = session.getAttribute("uname");
             String license = (String) ulicense;
@@ -81,8 +79,16 @@ public class userServlet extends HttpServlet {
             //System.out.println(request.getParameter("add"));
             //System.out.println(request.getParameter("query").equals("true"));
             if (request.getParameter("query")!=null){
+                String is_overDue=request.getParameter("is_overDue");
+                boolean overDue;
+                if (is_overDue==null){
+                    overDue=false;
+                }
+                else{
+                    overDue=Boolean.parseBoolean(is_overDue);
+                }
                 //System.out.println("querry");
-                JSONObject result= doQuery(active,length);
+                JSONObject result= doQuery(active,length,overDue);
                 pw.print(result);
 
             }
@@ -93,10 +99,10 @@ public class userServlet extends HttpServlet {
                 pw.print(result);
             }
             else if(request.getParameter("delete")!=null){
-                String[] ids=request.getParameterValues("delete_lines[]");
-                System.out.println(ids[0]);
+                String license=request.getParameter("delete_line");
+                System.out.println(license);
                 //System.out.println(ids[1]);
-                int result=doDelete(ids);
+                String result=doDelete(license);
                 pw.print(result);
             }
             else if(request.getParameter("update")!=null){
@@ -158,40 +164,69 @@ public class userServlet extends HttpServlet {
         return info;
     }
 
-    protected JSONObject doQuery(int active,int length){
+    protected JSONObject doQuery(int active,int length,boolean overDue){
         List jsonlist=new ArrayList<JSONObject>();
         JSONObject result=new JSONObject();
         int pagenum=1;
         int size = attributes.size();
         ResultSet rs;
         ResultSet count;
-        if (size == 0) {
-            rs = db.query("SELECT * FROM reader ORDER BY userid desc limit "+ String.valueOf((active-1)*length)+","+String.valueOf(length));
-            count=db.query("SELECT count(*) from reader");
-            System.out.println("qqqqq");
-        } else {
-            String s = "SELECT * FROM reader where";
-            String s1="SELECT count(*) FROM reader where";
-            int i = 0;
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                i++;
-                if (i < size) {
+        String s=null;
+        String s1=null;
+        if(overDue==true) {
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
+            String currentDate = df.format(new Date());// new Date()为获取当前系统时间
+            if (size == 0) {
+                s= "SELECT * FROM reader,borrow where";
+                s1= "SELECT count(*) FROM reader,borrow where";
+
+                //rs = db.query());
+                //count = db.query("SELECT count(*) from reader");
+                System.out.println("qqqqq");
+            } else {
+                s = "SELECT * FROM reader,borrow where";
+                s1 = "SELECT count(*) FROM reader,borrow where";
+                int i = 0;
+                for (Map.Entry<String, String> entry : attributes.entrySet()) {
                     System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
-                    s = s + " " + entry.getKey() + "='" + entry.getValue() + "' AND";
-                    s1 = s1 + " " + entry.getKey() + "='" + entry.getValue() + "' AND";
-                }
-                else {
-                    s = s + " " + entry.getKey() + "='" + entry.getValue() + "'";
-                    s1 = s1 + " " + entry.getKey() + "='" + entry.getValue() + "'";
+                    s = s + " reader." + entry.getKey() + "='" + entry.getValue() + "' AND";
+                    s1 = s1 + " reader." + entry.getKey() + "='" + entry.getValue() + "' AND";
                 }
             }
-            s=s+" ORDER BY bookid desc limit "+ String.valueOf((active-1)*length)+","+String.valueOf(length);
-            //System.out.println(s);
+            s1 = s1 +" reader.license=borrow.ulicense AND borrow.is_return=0 AND borrow.duedate<'"+currentDate+"' ORDER BY reader.userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+            s = s +" reader.license=borrow.ulicense AND borrow.is_return=0 AND borrow.duedate<'"+currentDate+"' ORDER BY reader.userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+        }
+        else {
+            if (size == 0) {
+                s="SELECT * FROM reader ORDER BY userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+                s1="SELECT count(*) FROM reader ORDER BY userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+
+                System.out.println("qqqqq");
+            } else {
+                s = "SELECT * FROM reader where";
+                s1 = "SELECT count(*) FROM reader where";
+                int i = 0;
+                for (Map.Entry<String, String> entry : attributes.entrySet()) {
+                    i++;
+                    if (i < size) {
+                        System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
+                        s = s + " " + entry.getKey() + "='" + entry.getValue() + "' AND";
+                        s1 = s1 + " " + entry.getKey() + "='" + entry.getValue() + "' AND";
+                    } else {
+                        s = s + " " + entry.getKey() + "='" + entry.getValue() + "'";
+                        s1 = s1 + " " + entry.getKey() + "='" + entry.getValue() + "'";
+                    }
+                }
+                s = s + " ORDER BY bookid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+                s1 = s1 + " ORDER BY bookid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+
+            }
+        }
+            System.out.println(s);
             //System.out.println(s1);
             rs = db.query(s);
             count=db.query(s1);
 
-        }
 
         try {
             if (rs != null) {
@@ -246,15 +281,32 @@ public class userServlet extends HttpServlet {
         return result;
     }
 
-    protected int doDelete(String[] ids){
-        int k=0;
-        int length=ids.length;
-        for (int i=0;i<length;i++){
-            String s="DELETE from reader where userid='"+ids[i]+"'";
-            System.out.println(s);
-            k=db.executeupdate(s);
+    protected String doDelete(String license){
+        String result="fail";
+        //int length=ids.length;
+        int numofBorrow=0;
+        try{
+            String is_deletable="SELECT count(*) from borrow where ulicense='"+license+"'and is_return=0";
+            ResultSet borrows=db.query(is_deletable);
+            while (borrows.next()){
+                numofBorrow=borrows.getInt(1);
+            }
+            if (numofBorrow>0){
+                result="该读者有书未还，不能删除";
+            }
+            else{
+                String s="DELETE from reader where license='"+license+"'";
+                int k=db.executeupdate(s);
+                if(k==1){
+                    result="OK";
+                }
+            }
+
+        } catch (SQLException e){
+            e.printStackTrace();
         }
-        return k;
+
+        return result;
     }
     protected int doUpdate(String id){
         String s="UPDATE reader SET";

@@ -26,12 +26,12 @@
                     <ul class="nav nav-pills nav-stacked" v-if="permission==='1'">
                         <li><a href="main.html">个人基本信息</a></li>
                         <li class="active"><a href="book.html">图书信息查询</a></li>
-                        <li><a>我的借阅</a></li>
+                        <li><a href="borrow.html">我的借阅</a></li>
                     </ul>
                     <ul class="nav nav-pills nav-stacked" v-if="permission==='2'">
                         <li><a href="admin.html">个人基本信息</a></li>
                         <li><a href="book.html">图书信息管理</a></li>
-                        <li><a>借阅管理</a></li>
+                        <li><a href="borrow.html">借阅管理</a></li>
                         <li class="active"><a>读者管理</a></li>
                     </ul>
                 </template>
@@ -44,6 +44,7 @@
                     <button type="button" class="btn btn-default pull-left" v-on:click="showadd" v-if="permission==='2'" >添加</button>
                     <button type="button" class="btn btn-default pull-left" v-on:click="showdelete" v-if="permission==='2'">删除</button>
                     <button type="button" class="btn btn-default pull-left" v-on:click="showupdate" v-if="permission==='2'">修改</button>
+                    <button type="button" class="btn btn-default" @click="queryOverDue" v-if="permission==='2'">超期</button>
                 </template>
             </div>
 
@@ -86,7 +87,9 @@
                             <td >{{line.udepart}}</td>
                             <td>{{line.ugrade}}</td>
                             <td >{{line.permission}}</td>
-                            <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.uid" v-model="delete_lines"></td>
+                            <td v-if="is_delete===true">
+                                <button type="button" class="btn btn_danger"  @click="deleteLine(line.license)">删除</button>
+                            </td>
                             <td v-if="is_update===true">
                                 <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
                             </td>
@@ -115,7 +118,6 @@
 
                         <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
                         <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
-                        <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true"><span class="glyphicon glyphicon-trash"></span>删除已选数据</button>
                         <p>共{{total_page}}页</p>
                     </template>
                 </table>
@@ -189,7 +191,8 @@
                 udepart: null,
                 ugrade: null,
                 upassword: null,
-                permission: null
+                permission: null,
+                is_overDue:false
             },
             is_show:false,
 
@@ -270,6 +273,10 @@
             },
             showupdate:function(){
                 result_list.is_update=!result_list.is_update;
+            },
+            queryOverDue:function(){
+                query_form.attri.is_overDue=!query_form.attri.is_overDue;
+                query_form.query(query_form.attri);
             }
         }
     })
@@ -331,23 +338,30 @@
                 this.get(attridata);
                 //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
             },
-            deleteline:function(){
+            deleteLine:function(license){
                 console.log(this.delete_lines);
                 var json={}
-                json.delete_lines=this.delete_lines;
+                json.delete_line=license;
+                //json.delete_lines=this.delete_lines;
                 json.delete="true";
                 var _this=this;
-                var _query_form=query_form;
+                var _query=query_form;
                 $.post("user",json,function(data){
-                    if(data!='0'){
-                        var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
-                        attrijson.active=_this.active_page;
+                    if(data=="OK"){
+                        var attrijson=JSON.parse(JSON.stringify(_query.attri));
+                        attrijson.active=this.active_page;
                         attrijson.query="true";
-                        attrijson.length=_this.page_length;
+                        attrijson.length=this.page_length;
                         _this.get(attrijson)
+                    }
+                    else{
+                        alert(data);
                     }
 
                 })
+            },
+            queryOverDue:function(){
+                this.get({})
             },
             updateLine:function(index){
                 this.selected_index=index;

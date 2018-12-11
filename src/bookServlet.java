@@ -41,6 +41,9 @@ public class bookServlet extends HttpServlet {
         if(temp!=null&&temp!="")
         length=Integer.parseInt(temp);
         int pagenum=1;
+        String bookid=request.getParameter("bookid");
+        if (bookid != null&&bookid!="")
+            attributes.put("bookid", bookid);
         String bname = request.getParameter("bname");
         if (bname != null&&bname!="")
             attributes.put("bname", bname);
@@ -81,10 +84,10 @@ public class bookServlet extends HttpServlet {
             pw.print(result);
         }
         else if(request.getParameter("delete")!=null){
-            String[] ids=request.getParameterValues("delete_lines[]");
-            System.out.println(ids[0]);
+            String id=request.getParameter("delete_line");
+            System.out.println(id);
             //System.out.println(ids[1]);
-            int result=doDelete(ids);
+            String result=doDelete(id);
             pw.print(result);
         }
         else if(request.getParameter("update")!=null){
@@ -194,16 +197,32 @@ public class bookServlet extends HttpServlet {
         return result;
     }
 
-    protected int doDelete(String[] ids){
-        int k=0;
-        int length=ids.length;
-        for (int i=0;i<length;i++){
-            //String is_borrowed="SELECT count(*) from borrow where bookid='"+ids[i]+"'";
-            String s="DELETE from books where bookid='"+ids[i]+"'";
-            System.out.println(s);
-            k=db.executeupdate(s);
+    protected String doDelete(String id){
+        String result="fail";
+        //int length=ids.length;
+        int numofBorrow=0;
+        try{
+            String is_deletable="SELECT count(*) from borrow where bookid='"+id+"'and is_return=0";
+            ResultSet borrows=db.query(is_deletable);
+            while (borrows.next()){
+                numofBorrow=borrows.getInt(1);
+            }
+            if (numofBorrow>0){
+                result="该书有读者未还，不能删除";
+            }
+            else{
+                String s="DELETE from book where bookid='"+id+"'";
+                int k=db.executeupdate(s);
+                if(k==1){
+                    result="OK";
+                }
+            }
+
+        } catch (SQLException e){
+            e.printStackTrace();
         }
-        return k;
+
+        return result;
     }
     protected int doUpdate(String id){
         String s="UPDATE books SET";

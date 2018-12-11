@@ -32,7 +32,7 @@
                             <li><a href="admin.html">个人基本信息</a></li>
                             <li><a href="book.html">图书信息管理</a></li>
                             <li class="active"><a>借阅管理</a></li>
-                            <li><a>读者管理</a></li>
+                            <li><a href="users.html">读者管理</a></li>
                         </ul>
                     </template>
                 </div>
@@ -71,7 +71,7 @@
                             <div class="modal-header">
                                 <h4 class="modal-title" id="updateModalLabel">借书</h4>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body" id="updateModal">
                                 <borrowform :attr="update.selected_line" operation="update" :permission="user.permission" @op="submitUpdate" @close="closeModal('update_form')">
                                 </borrowform>
                             </div>
@@ -225,10 +225,13 @@
               this.is_query=false;
             },
             closeModal:function(modal){
+
                 $('#'+modal).modal('hide');
             },
             copyAttri:function(){
-              return JSON.parse(JSON.stringify(this.attri));
+                var attri=JSON.parse(JSON.stringify(this.attri))
+                this.setdate(attri);
+              return attri;
             },
             add: function (val) {
                 console.log("add")
@@ -248,14 +251,13 @@
                 })
             },
             borrow:function(){
-              this.setdate();
               $('#add_form').modal('show');
             },
-            setdate:function(){
+            setdate:function(val){
                 var date = new Date();
-                this.attri.bdate=this.formatdate(date);
+                val.bdate=this.formatdate(date);
                 date.setDate(date.getDate()+14);
-                this.attri.duedate=this.formatdate(date);
+                val.duedate=this.formatdate(date);
             },
             formatdate:function(date){
                 var year = date.getFullYear();
@@ -360,8 +362,12 @@
                 var _this = this;
                 $.post("borrow", updatejson, function (data) {
                     if (data == '1') {
-                        $('#updateModal').modal('hide');
-                        Vue.set(_this.tabel.lines, _this.update.selected_index, _this.update.selected_line);
+                        $('#update_form').modal('hide');
+                        var json=JSON.parse(JSON.stringify(_this.attri));
+                        json.active_page=_this.tabel.active_page;
+                        json.page_length=_this.tabel.page_length;
+                        this.get(json)
+                       //Vue.set(_this.tabel.lines, _this.update.selected_index, _this.update.selected_line);
                     }
                 })
             },
@@ -396,6 +402,7 @@
                         attrijson.operation="query";
                         attrijson.length=_this.tabel.page_length;
                         _this.get(attrijson)
+                        alert("删除"+data+"条数据");
                     }
 
                 })

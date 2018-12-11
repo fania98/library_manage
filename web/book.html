@@ -26,12 +26,12 @@
                         <ul class="nav nav-pills nav-stacked" v-if="permission==='1'">
                             <li><a href="main.html">个人基本信息</a></li>
                             <li class="active"><a href="book.html">图书信息查询</a></li>
-                            <li><a>我的借阅</a></li>
+                            <li><a href="borrow.html">我的借阅</a></li>
                         </ul>
                         <ul class="nav nav-pills nav-stacked" v-if="permission==='2'">
                             <li><a href="admin.html">个人基本信息</a></li>
                             <li class="active"><a href="book.html">图书信息管理</a></li>
-                            <li><a>借阅管理</a></li>
+                            <li><a href="borrow.html">借阅管理</a></li>
                             <li><a href="users.html">读者管理</a></li>
                         </ul>
                     </template>
@@ -50,6 +50,10 @@
             <div id="query_form" >
                 <template>
                 <form  class="form-inline" role="form" @submit.prevent="query" v-if="is_query===true">
+                    <div class="form-group">
+                        <label for="bookid">书名：</label>
+                        <input v-model="attri.bookid" id="bookid" class="form-control" type="text" placeholder="书号" >
+                    </div>
                     <div class="form-group">
                         <label for="bname">书名：</label>
                         <input v-model="attri.bname" id="bname" class="form-control" type="text" placeholder="书名" >
@@ -142,6 +146,7 @@
                 <tbody>
                 <template v-for="(line,index) of lines">
                     <tr >
+                        <td> {{line.id}} </td>
                         <td >{{ line.bname }}</td>
                         <td >{{ line.author }}</td>
                         <td>{{ line.isbn }}</td>
@@ -150,9 +155,11 @@
                         <td >{{line.ssh}}</td>
                         <td>{{line.num}}</td>
                         <td>{{line.available}}</td>
-                        <td v-if="is_delete===true"><input type="checkbox" v-bind:value="line.id"  v-bind:disabled="line.num!=line.available" v-model="delete_lines"></td>
                         <td v-if="is_update===true">
                             <button type="button" class="btn btn_primary"  @click="updateLine(index)" data-toggle="modal" data-target="#updateModal">更改</button>
+                        </td>
+                        <td v-if="is_delete===true">
+                            <button type="button" class="btn btn_danger"  @click="deleteLine(line.id)">删除</button>
                         </td>
                         <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                             <div class="modal-dialog">
@@ -206,7 +213,15 @@
 
                     <button type="button" class="btn btn-default" v-on:click="last">上一页</button>
                     <button type="button" class="btn btn-default" v-on:click="next">下一页</button>
-                    <button type="button" class="btn btn-danger" v-on:click="deleteline" v-if="is_delete===true"><span class="glyphicon glyphicon-trash"></span>删除已选数据</button>
+                    <ul class="pagination">
+                        <li><a v-on:click="last">&laquo;</a></li>
+                        <li><a @click="jump(active_page)">{{active_page}}</a></li>
+                        <li v-if="active_page+1<=total_page"><a  @click="jump(active_page+1)" >{{active_page+1}}</a></li>
+                        <li v-if="active_page+2<=total_page"><a  @click="jump(active_page+2)">{{active_page+2}}</a></li>
+                        <li v-if="active_page+3<=total_page"><a  @click="jump(active_page+3)">{{active_page+3}}</a></li>
+                        <li v-if="active_page+4<=total_page"><a  @click="jump(active_page+4)">{{active_page+4}}</a></li>
+                        <li><a v-on:click="next">&raquo;</a></li>
+                    </ul>
                     <p>共{{total_page}}页</p>
                 </template>
             </table>
@@ -238,6 +253,7 @@
         el: '#query_form',
         data: {
             attri: {
+                bookid:null,
                 permission: null,
                 bname: null,
                 author: null,
@@ -330,7 +346,7 @@
     var result_list= new Vue({
         el: '#result_list',
         data:{
-                header: ['书名', '作者', 'isbn码', '出版社', '出版日期', 'ssh码', '总数','可借数'],
+                header: ['书号','书名', '作者', 'isbn码', '出版社', '出版日期', 'ssh码', '总数','可借数'],
                 lines: [],
                 loaded: false,
                 active_page: 1,
@@ -384,20 +400,34 @@
                 this.get(attridata);
                 //this.get({bname:query_form.bname,author:query_form.author,isbn:query_form.isbn,cbs:query_form.cbs,year:query_form.year,ssh:query_form.ssh,num:query_form.num,active:this.active_page,length:this.page_length,query:"true"});
             },
-            deleteline:function(){
-              console.log(this.delete_lines);
-              var json={}
-              json.delete_lines=this.delete_lines;
-              json.delete="true";
-              var _this=this;
-              var _query_form=query_form;
+            jump:function(page){
+                if(page>=1&&page<=this.total_page)
+                    this.active_page=page;
+                this.delete_lines=[];
+                var attridata=JSON.parse(JSON.stringify(query_form.attri));
+                attridata.query="true";
+                attridata.active=this.active_page;
+                attridata.length=this.page_length;
+                this.get(attridata);
+            },
+            deleteLine:function(id){
+                console.log(this.delete_lines);
+                var json={}
+                json.delete_line=id;
+                //json.delete_lines=this.delete_lines;
+                json.delete="true";
+                var _this=this;
+                var _query=query_form;
                 $.post("book",json,function(data){
-                    if(data!='0'){
-                        var attrijson=JSON.parse(JSON.stringify(_query_form.attri));
-                        attrijson.active=_this.active_page;
+                    if(data=="OK"){
+                        var attrijson=JSON.parse(JSON.stringify(_query.attri));
+                        attrijson.active=this.active_page;
                         attrijson.query="true";
-                        attrijson.length=_this.page_length;
+                        attrijson.length=this.page_length;
                         _this.get(attrijson)
+                    }
+                    else{
+                        alert(data);
                     }
 
                 })
