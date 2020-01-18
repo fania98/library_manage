@@ -57,6 +57,7 @@ public class loginServlet extends HttpServlet {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        db.closestate();
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

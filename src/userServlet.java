@@ -75,6 +75,9 @@ public class userServlet extends HttpServlet {
             String upassword = request.getParameter("upassword");
             if (upassword != null&&upassword!="")
                 attributes.put("upassword", upassword);
+            String permission = request.getParameter("permission");
+            if (permission != null&&permission!="")
+                attributes.put("permission", permission);
             System.out.println(attributes);
             //System.out.println(request.getParameter("add"));
             //System.out.println(request.getParameter("query").equals("true"));
@@ -111,6 +114,7 @@ public class userServlet extends HttpServlet {
                 pw.print(result);
             }
         }
+        db.closestate();
     }
     public String updatePass(String license,String originalPass,String newPass){
         ResultSet rs=db.query("SELECT upassword FROM reader where license= '"+license+"'");
@@ -217,8 +221,8 @@ public class userServlet extends HttpServlet {
                         s1 = s1 + " " + entry.getKey() + "='" + entry.getValue() + "'";
                     }
                 }
-                s = s + " ORDER BY bookid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
-                s1 = s1 + " ORDER BY bookid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+                s = s + " ORDER BY userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
+                s1 = s1 + " ORDER BY userid desc limit " + String.valueOf((active - 1) * length) + "," + String.valueOf(length);
 
             }
         }

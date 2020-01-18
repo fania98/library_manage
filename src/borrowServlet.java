@@ -105,6 +105,7 @@ public class borrowServlet extends HttpServlet {
             int result=doUpdate(id);
             pw.print(result);
         }
+        db.closestate();
     }
     public String updatePass(String license,String originalPass,String newPass){
         ResultSet rs=db.query("SELECT upassword FROM reader where license= '"+license+"'");

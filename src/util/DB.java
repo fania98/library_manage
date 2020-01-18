@@ -53,6 +53,7 @@ public class DB {
       try {
           if (stmt != null) stmt.close();
           if (pstmt != null) pstmt.close();
+          if(conn!=null) conn.close();
       } catch (SQLException e){
           e.printStackTrace();
       }

@@ -211,7 +211,7 @@ public class bookServlet extends HttpServlet {
                 result="该书有读者未还，不能删除";
             }
             else{
-                String s="DELETE from book where bookid='"+id+"'";
+                String s="DELETE from books where bookid='"+id+"'";
                 int k=db.executeupdate(s);
                 if(k==1){
                     result="OK";
